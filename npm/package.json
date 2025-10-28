@@ -7,21 +7,20 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "start": "func start",
+    "start": "npm run build && func start",
     "test": "echo \"No tests yet...\""
   },
   "dependencies": {
-    "@azure/functions": "4.7.2-preview",
-    "@azure/functions-extensions-servicebus": "0.2.0-preview"
+    "@azure/functions": "4.7.4-preview",
+    "@azure/functions-extensions-servicebus": "0.3.5-preview"
   },
   "devDependencies": {
-    "@types/minimist": "^1.2.5",
     "@types/node": "22.18.0",
     "azure-functions-core-tools": "4.2.2",
     "rimraf": "6.0.1",
     "typescript": "5.9.2"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   }
 }

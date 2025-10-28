@@ -6,10 +6,6 @@ export async function serviceBusTrigger1(
   serviceBusMessageContext: ServiceBusMessageContext, 
   context: InvocationContext
 ): Promise<void> {
-  //console.log('ServiceBus function invoked with args:', args);
-  context.log(
-    `Service Bus function processed message:`
-  );
   try {
     //Actual Message
     context.log("triggerMetadata: ", context.triggerMetadata);

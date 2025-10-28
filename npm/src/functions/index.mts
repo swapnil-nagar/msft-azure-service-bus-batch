@@ -1,31 +1,24 @@
 import "@azure/functions-extensions-servicebus";
-import { ServiceBusMessageContext } from "@azure/functions-extensions-servicebus"
+import { ServiceBusMessageActions, ServiceBusMessageContext } from "@azure/functions-extensions-servicebus"
 import { app, InvocationContext } from "@azure/functions";
 
 export async function serviceBusTrigger1(
-  serviceBusMessageContext: any, 
+  serviceBusMessageContext: ServiceBusMessageContext, 
   context: InvocationContext
 ): Promise<void> {
   //console.log('ServiceBus function invoked with args:', args);
   context.log(
     `Service Bus function processed message:`
   );
-  try {
+  const actions: ServiceBusMessageActions = serviceBusMessageContext.actions;
+      //context.log("triggerMetadata: ", context.triggerMetadata);
     //Actual Message
-    context.log("triggerMetadata: ", context.triggerMetadata);
-    if (Array.isArray(serviceBusMessageContext.messages)) {
-      context.log('Completing the message', serviceBusMessageContext.messages[0]);
+    for(let message of serviceBusMessageContext.messages) {
+      //context.log('Completing the message', message);
       //Use serviceBusMessageActions to action on the messages
-      await serviceBusMessageContext.actions.complete(serviceBusMessageContext.messages[0]);
-      context.log('Completing the body', serviceBusMessageContext.messages[0].body);
-    } else {
-      context.log('Completing the message', serviceBusMessageContext.messages);
-      await serviceBusMessageContext.actions.complete(serviceBusMessageContext.messages);
-      context.log('Completing the body', serviceBusMessageContext.messages.body);
+      await actions.complete(message);
+      //context.log('Completing the body', message.body);
     }
-  } catch (error) {
-    context.log('Error processing Service Bus message:', error);
-  }
 }
 
 app.serviceBusQueue("serviceBusTrigger", {
@@ -37,5 +30,3 @@ app.serviceBusQueue("serviceBusTrigger", {
   handler: serviceBusTrigger1,
 });
 
-// https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-service-bus?tabs=isolated-process%2Cextensionv5&pivots=programming-language-javascript
-// autoCompleteMessages
