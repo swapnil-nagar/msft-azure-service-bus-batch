@@ -7,18 +7,22 @@ export async function serviceBusTrigger1(
   context: InvocationContext
 ): Promise<void> {
 
-    const message = serviceBusMessageContext.messages[0];
-    context.log(message);
+  const actions = serviceBusMessageContext.actions as ServiceBusMessageActions;
+  let cnt = 0;
+  for (const message of serviceBusMessageContext.messages) {
+    cnt = cnt + 1;
+    await context.log('Processing message number: ' + cnt);
+    await context.log(message);
     
     // Get current retry count from custom properties, default to 0
     const deliveryCount = message.deliveryCount ? message.deliveryCount : 0;
-    context.log(`Current retry count: ${deliveryCount}`);
+    await context.log(`Current retry count: ${deliveryCount}`);
 
     if (deliveryCount >= 3) {
         // After 3 retries, complete the message to remove it from the queue
-        context.log(`Maximum retry count (3) reached. Completing message to prevent infinite loop.`);
-        await serviceBusMessageContext.actions.complete(message);
-        context.log('Message completed after maximum retries');
+        await context.log(`Maximum retry count (3) reached. Completing message to prevent infinite loop.`);
+        await actions.complete(message);
+        await context.log('Message completed after maximum retries');
     } else {
         // Abandon with updated retry count
             const propertiesToModify = {
@@ -27,12 +31,13 @@ export async function serviceBusTrigger1(
                 errorMessage: "Processing failed"
             };
 
-            context.log(`Abandoning message with retry count: ${deliveryCount + 1}`);
-            await serviceBusMessageContext.actions.abandon(message, propertiesToModify);
+            await context.log(`Abandoning message with retry count: ${deliveryCount + 1}`);
+            await actions.abandon(message, propertiesToModify);
         }
-    
-    
-    context.log('triggerMetadata: ', context.triggerMetadata);
+
+
+    await context.log('triggerMetadata: ', context.triggerMetadata);
+  }
 }
 
 app.serviceBusQueue("serviceBusTrigger", {
