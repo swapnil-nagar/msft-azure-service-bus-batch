@@ -6,19 +6,33 @@ export async function serviceBusTrigger1(
   serviceBusMessageContext: ServiceBusMessageContext, 
   context: InvocationContext
 ): Promise<void> {
-  //console.log('ServiceBus function invoked with args:', args);
-  context.log(
-    `Service Bus function processed message:`
-  );
-  const actions: ServiceBusMessageActions = serviceBusMessageContext.actions;
-      //context.log("triggerMetadata: ", context.triggerMetadata);
-    //Actual Message
-    for(let message of serviceBusMessageContext.messages) {
-      //context.log('Completing the message', message);
-      //Use serviceBusMessageActions to action on the messages
-      await actions.complete(message);
-      //context.log('Completing the body', message.body);
-    }
+
+    const message = serviceBusMessageContext.messages[0];
+    context.log(message);
+    
+    // Get current retry count from custom properties, default to 0
+    const deliveryCount = message.deliveryCount ? message.deliveryCount : 0;
+    context.log(`Current retry count: ${deliveryCount}`);
+
+    if (deliveryCount >= 3) {
+        // After 3 retries, complete the message to remove it from the queue
+        context.log(`Maximum retry count (3) reached. Completing message to prevent infinite loop.`);
+        await serviceBusMessageContext.actions.complete(message);
+        context.log('Message completed after maximum retries');
+    } else {
+        // Abandon with updated retry count
+            const propertiesToModify = {
+                retryCnt: deliveryCount + 1,
+                lastRetryTime: new Date().toISOString(),
+                errorMessage: "Processing failed"
+            };
+
+            context.log(`Abandoning message with retry count: ${deliveryCount + 1}`);
+            await serviceBusMessageContext.actions.abandon(message, propertiesToModify);
+        }
+    
+    
+    context.log('triggerMetadata: ', context.triggerMetadata);
 }
 
 app.serviceBusQueue("serviceBusTrigger", {
